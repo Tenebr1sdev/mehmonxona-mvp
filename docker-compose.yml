@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: hotel
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d hotel"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://hotel:hotel@db:5432/hotel
+      SECRET_KEY: ${SECRET_KEY:-local-dev-key-change-me-before-deployment}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo123!}
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_MB: 12
+      GCS_BUCKET: ${GCS_BUCKET:-}
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  postgres_data:
+  uploads:
